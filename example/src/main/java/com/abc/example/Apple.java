@@ -1,4 +1,4 @@
-package com.abc.core.example;
+package com.abc.example;
 
 public class Apple {
     String name = "苹果类";

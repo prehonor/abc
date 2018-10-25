@@ -1,4 +1,4 @@
-package com.abc.core.example.pckage;
+package com.abc.example.pckage;
 
 public interface ActionOusideService {
 }

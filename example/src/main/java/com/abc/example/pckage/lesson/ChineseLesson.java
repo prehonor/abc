@@ -1,4 +1,4 @@
-package com.abc.core.example.pckage.lesson;
+package com.abc.example.pckage.lesson;
 
 import com.abc.core.annotation.Component;
 import com.abc.core.util.Utils;
