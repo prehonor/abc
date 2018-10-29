@@ -1,25 +1,20 @@
 package com.abc.core;
 
-import com.abc.core.io.ClassFileResource;
 import com.abc.core.io.PropertiesResource;
-import com.abc.core.util.FileUtils;
 import com.abc.core.util.Utils;
 
-import java.io.File;
 import java.io.IOException;
-import java.net.URL;
 import java.util.Enumeration;
 import java.util.Properties;
-import java.util.Set;
 
 /**
  * 读取properties文件并解析为BeanDefination的实际处理类
  * */
 public class PropertiesBeanDefinationReader {
 
-    private ListableBeanFactory factory = null;
+    private DefaultListableBeanFactory factory = null;
 
-    PropertiesBeanDefinationReader(ListableBeanFactory factory){
+    PropertiesBeanDefinationReader(DefaultListableBeanFactory factory){
         this.factory = factory;
     }
 
@@ -54,6 +49,7 @@ public class PropertiesBeanDefinationReader {
                 loadBeanDefination(value);
             }else if(key.equals("scan-package")){
                 scanCandidateComponents(key,value);
+                registerComponents();
             }else{
                 processBeanDefination(key,value);
             }
@@ -65,7 +61,7 @@ public class PropertiesBeanDefinationReader {
 
     }
 
-    public ListableBeanFactory getRegistry(){
+    public DefaultListableBeanFactory getRegistry(){
         assert factory!=null : "注册中心为空";
         return factory;
     }
@@ -76,6 +72,16 @@ public class PropertiesBeanDefinationReader {
             componetBeanDifinitionScanner.registryComponentBeanDefinition(value);
         } catch (IOException e) {
             e.printStackTrace();
+        }
+    }
+
+    /**
+     * 注册处理依赖注入的类的beandefinition
+     * */
+    public void registerComponents(){
+        if(!factory.containsBeanDefinition(AutowiredAnnotationBeanPostProcessor.AUTOWIRED_ANNOTATION_PROCESSOR_BEAN_NAME)){
+            BeanDefinition beanDefination = new BeanDefinition(AutowiredAnnotationBeanPostProcessor.AUTOWIRED_ANNOTATION_PROCESSOR_BEAN_NAME,AutowiredAnnotationBeanPostProcessor.class.getName());
+            getRegistry().registryBeanDefinition(AutowiredAnnotationBeanPostProcessor.AUTOWIRED_ANNOTATION_PROCESSOR_BEAN_NAME,beanDefination);
         }
     }
 }
