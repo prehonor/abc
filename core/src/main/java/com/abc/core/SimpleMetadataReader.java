@@ -1,5 +1,6 @@
 package com.abc.core;
 
+import com.abc.core.io.Resource;
 import com.sun.istack.internal.Nullable;
 import org.objectweb.asm.ClassReader;
 

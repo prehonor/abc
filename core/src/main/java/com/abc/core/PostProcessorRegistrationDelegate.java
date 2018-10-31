@@ -2,7 +2,7 @@ package com.abc.core;
 
 public class PostProcessorRegistrationDelegate {
     public static void registerBeanPostProcessors(
-            DefaultListableBeanFactory beanFactory, ClassPathPropertiesAppContext applicationContext) {
+            DefaultListableBeanFactory beanFactory, ApplicationContext applicationContext) {
 
         String[] beanNames = beanFactory.getBeanNamesByType(BeanPostProcessor.class);
         for(String beanName : beanNames){

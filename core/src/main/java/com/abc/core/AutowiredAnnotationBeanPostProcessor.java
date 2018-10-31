@@ -56,7 +56,7 @@ public class AutowiredAnnotationBeanPostProcessor implements BeanPostProcessor,B
             super(member);
             this.required = required;
         }
-        public  void inject(Object bean,String beanName){
+        public void inject(Object bean,String beanName){
             Field field = (Field) this.member;
             Object value;
             Class fieldType = field.getType();

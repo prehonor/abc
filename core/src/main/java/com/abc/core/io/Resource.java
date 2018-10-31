@@ -1,4 +1,4 @@
-package com.abc.core;
+package com.abc.core.io;
 
 import java.io.IOException;
 import java.io.InputStream;

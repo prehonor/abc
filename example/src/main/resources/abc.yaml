@@ -1,0 +1,13 @@
+- bean:
+    id: studentService
+    class: com.abc.example.pckage.StudentService
+- bean:
+    id: teacherService
+    class: com.abc.example.pckage.TeacherService
+- bean:
+    id: userService
+    class: com.abc.example.pckage.UserService
+- scan:componet-scan :
+    base-package: com.abc.example.pckage
+- import:
+    resource: def.yaml

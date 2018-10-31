@@ -4,15 +4,14 @@ import com.abc.core.io.ClassPathResource;
 import com.abc.core.io.Resource;
 import com.abc.core.parser.ConfigFileParser;
 import com.abc.core.parser.ParserData;
-import com.abc.core.parser.PropertiesBeanDefinationReader;
+import com.abc.core.parser.YamlBeanDefinitionReader;
 
-public class ClassPathPropertiesAppContext extends ApplicationContext{
-
+public class ClassPathYamlAppContext extends ApplicationContext{
     private String[] paths;
     private ConfigFileParser reader;
     private DefaultListableBeanFactory factory = null;
 
-    public ClassPathPropertiesAppContext(String... paths){
+    public ClassPathYamlAppContext(String... paths){
         factory = createBeanFactory();
         reader = createConfigFileParser();
         this.paths = paths;
@@ -54,6 +53,6 @@ public class ClassPathPropertiesAppContext extends ApplicationContext{
     }
 
     public ConfigFileParser createConfigFileParser(){
-        return new PropertiesBeanDefinationReader(factory);
+        return new YamlBeanDefinitionReader(factory);
     }
 }

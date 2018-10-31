@@ -1,5 +1,6 @@
 package com.abc.core;
 
+import com.abc.core.parser.BeanDefinitionRegistry;
 import com.abc.core.util.AutowiredCapableBeanFactory;
 import com.abc.core.util.ReflectUtil;
 
@@ -8,7 +9,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class DefaultListableBeanFactory implements ListableBeanFactory, AutowiredCapableBeanFactory {
+public class DefaultListableBeanFactory implements ListableBeanFactory, AutowiredCapableBeanFactory, BeanDefinitionRegistry {
 
     private final Map<String, BeanDefinition> beanDefinitionMap = new ConcurrentHashMap<String, BeanDefinition>(256);
     private volatile List<String> beanDefinitionNames = new ArrayList<>(256);
@@ -17,6 +18,7 @@ public class DefaultListableBeanFactory implements ListableBeanFactory, Autowire
     private final List<BeanPostProcessor> beanPostProcessors = new ArrayList<>();
 
 
+    @Override
     public void registryBeanDefinition(String key,BeanDefinition beanDefinition){
         if(beanDefinitionMap.get(key)==null){
             beanDefinitionMap.put(key,beanDefinition);

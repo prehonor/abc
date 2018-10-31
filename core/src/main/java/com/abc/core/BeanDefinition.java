@@ -4,7 +4,7 @@ public class BeanDefinition {
     private String className;
     private String id;
 
-    BeanDefinition(String id, String className){
+    public BeanDefinition(String id, String className){
         this.id = id;
         this.className = className;
     }
