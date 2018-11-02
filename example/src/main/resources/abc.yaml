@@ -4,6 +4,9 @@
 - bean:
     id: teacherService
     class: com.abc.example.pckage.TeacherService
+    property:
+        name: studentService
+        ref: studentService
 - bean:
     id: userService
     class: com.abc.example.pckage.UserService

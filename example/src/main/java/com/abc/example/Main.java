@@ -2,6 +2,7 @@ package com.abc.example;
 
 import com.abc.core.ClassPathPropertiesAppContext;
 import com.abc.core.ClassPathYamlAppContext;
+import com.abc.example.pckage.TeacherService;
 import com.abc.example.pckage.lesson.ChineseLesson;
 
 public class Main {
@@ -9,7 +10,8 @@ public class Main {
     public static void main(String[] args)
     {
 //        testPropertiestAppContext();
-        testYamlAppContext();
+//        testYamlAppContext();
+        testInjectProperty();
     }
 
     public static void testPropertiestAppContext(){
@@ -26,5 +28,11 @@ public class Main {
         System.out.println(orange.getName());
         ChineseLesson chineseLesson = (ChineseLesson) context.getBean("lesson");
         chineseLesson.function();
+    }
+
+    public static void testInjectProperty(){
+        ClassPathYamlAppContext context = new ClassPathYamlAppContext("abc.yaml");
+        TeacherService teacherService = (TeacherService) context.getBean("teacherService");
+        teacherService.inventStudentParent();
     }
 }
