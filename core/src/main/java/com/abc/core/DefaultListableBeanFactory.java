@@ -1,7 +1,8 @@
 package com.abc.core;
 
 import com.abc.core.parser.BeanDefinitionRegistry;
-import com.abc.core.util.AutowiredCapableBeanFactory;
+import com.abc.core.parser.support.PropertyValue;
+import com.abc.core.parser.support.PropertyValues;
 import com.abc.core.util.ReflectUtil;
 
 import java.util.ArrayList;
@@ -9,7 +10,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class DefaultListableBeanFactory implements ListableBeanFactory, AutowiredCapableBeanFactory, BeanDefinitionRegistry {
+public class DefaultListableBeanFactory implements ListableBeanFactory, AutowireCapableBeanFactory, BeanDefinitionRegistry {
 
     private final Map<String, BeanDefinition> beanDefinitionMap = new ConcurrentHashMap<String, BeanDefinition>(256);
     private volatile List<String> beanDefinitionNames = new ArrayList<>(256);
@@ -62,7 +63,7 @@ public class DefaultListableBeanFactory implements ListableBeanFactory, Autowire
                 singletonObject = create(beanName,beanDefinition);
                 applyBeanPostProcessors(beanName,singletonObject);  //
                 newSingleton = true;
-                populateBean(beanName,singletonObject);//装配bean
+                populateBean(beanName,beanDefinition,singletonObject);//装配bean
                 initializeBean(singletonObject,beanName,beanDefinition);//初始化bean
                 if (newSingleton) {
                     addSingleton(beanName, singletonObject);
@@ -105,9 +106,28 @@ public class DefaultListableBeanFactory implements ListableBeanFactory, Autowire
     /**
      * 装配bean属性
      * */
-    protected void populateBean(String beanName, Object instance){
+    protected void populateBean(String beanName,BeanDefinition mbd, Object instance){
+        PropertyValues pvs = (mbd.hasPropertyValues() ? mbd.getPropertyValues() : null);
         for (BeanPostProcessor bp : getBeanPostProcessors()) {
-            bp.postProcessPropertyValues(instance,beanName);
+            bp.postProcessPropertyValues(instance,beanName);//处理bean实例中的属性值
+        }
+        if(pvs!=null){
+            applyPropertyValues(beanName, mbd,instance, pvs);
+        }
+    }
+
+    /**
+     * 设置bean实例中的属性值
+     * */
+    protected void applyPropertyValues(String beanName, BeanDefinition mbd,Object instance, PropertyValues pvs){
+        if (pvs.isEmpty()) {
+            return;
+        }
+        BeanDefinitionValueResolver valueResolver = new BeanDefinitionValueResolver(this, beanName, mbd);
+        for(PropertyValue pv : pvs.getPropertyValueList()){
+            Object value = valueResolver.resolveValueIfNecessary(pv,pv.getValue());
+            PropertyAccessor propertyAccessor = new PropertyAccessor(instance);
+            propertyAccessor.setProperty(pv.getName(),value);
         }
     }
 
@@ -133,6 +153,7 @@ public class DefaultListableBeanFactory implements ListableBeanFactory, Autowire
             Object instance = getSingleton(beanName,false);//从缓存中瞥一眼
             if(instance==null){
                 BeanDefinition beanDefinition = getBeanDefinition(beanName);
+                assert(beanDefinition!=null);
                 if(ReflectUtil.isTypeClass(clazz.getName(),beanDefinition.getClassName(),ClassLoader.getSystemClassLoader())){
                     list.add(beanName);
                 }

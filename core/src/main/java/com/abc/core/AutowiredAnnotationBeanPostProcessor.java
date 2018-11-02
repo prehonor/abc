@@ -2,10 +2,8 @@ package com.abc.core;
 
 import com.abc.core.annotation.Autowired;
 import com.abc.core.util.AnnotatedElementUtils;
-import com.abc.core.util.AutowiredCapableBeanFactory;
 import com.abc.core.util.ReflectUtil;
 
-import java.beans.PropertyDescriptor;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.*;
 import java.util.LinkedHashSet;
@@ -20,7 +18,7 @@ public class AutowiredAnnotationBeanPostProcessor implements BeanPostProcessor,B
     private final Set<Class<? extends Annotation>> autowiredAnnotationTypes = new LinkedHashSet<>();
     private String requiredParameterName = "required";
     private boolean requiredParameterValue = true;
-    private AutowiredCapableBeanFactory beanFactory;
+    private AutowireCapableBeanFactory beanFactory;
 
 
     public static final String AUTOWIRED_ANNOTATION_PROCESSOR_BEAN_NAME =
@@ -47,7 +45,7 @@ public class AutowiredAnnotationBeanPostProcessor implements BeanPostProcessor,B
 
     @Override
     public void setBeanFactory(BeanFactory beanFactory) {
-        this.beanFactory = (AutowiredCapableBeanFactory)beanFactory;
+        this.beanFactory = (AutowireCapableBeanFactory)beanFactory;
     }
 
     public class AutowiredInjectedElement extends InjectionMetadata.InjectedElement{
@@ -90,6 +88,7 @@ public class AutowiredAnnotationBeanPostProcessor implements BeanPostProcessor,B
     private InjectionMetadata buildAutowiringMetadata(final Class<?> clazz) {
         LinkedList<InjectionMetadata.InjectedElement> elements = new LinkedList<>();
         final LinkedList<InjectionMetadata.InjectedElement> currElements = new LinkedList<>();
+        //检测指定的对象的class中的所有属性,获取存在依赖注入注解的类属性
         ReflectUtil.doWithLocalFields(clazz, field -> {
             AnnotationAttributes ann = findAutowiredAnnotation(field);
             if (ann != null) {
@@ -119,6 +118,7 @@ public class AutowiredAnnotationBeanPostProcessor implements BeanPostProcessor,B
         }
         return null;
     }
+
     private class AutowiredMethodElement extends InjectionMetadata.InjectedElement {
         private final boolean required;
         public AutowiredMethodElement(Method method, boolean required) {

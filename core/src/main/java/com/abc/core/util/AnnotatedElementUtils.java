@@ -38,6 +38,9 @@ public class AnnotatedElementUtils {
         T process(AnnotatedElement annotatedElement, Annotation annotation);
     }
 
+    /**
+     * 通过反射调用注解实例的属性值的get方法,即获取注解中的参数值,没有参数值就获取注解参数的默认值
+     * */
     private static class MergedAnnotationAttributesProcessor implements Processor<AnnotationAttributes> {
 
         @Override

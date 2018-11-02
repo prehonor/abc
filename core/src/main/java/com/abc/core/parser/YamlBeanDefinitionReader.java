@@ -6,6 +6,9 @@ import com.abc.core.ComponetBeanDifinitionScanner;
 import com.abc.core.DefaultListableBeanFactory;
 import com.abc.core.io.ClassPathResource;
 import com.abc.core.io.Resource;
+import com.abc.core.parser.support.PropertyValue;
+import com.abc.core.parser.support.RuntimeBeanReference;
+import com.abc.core.util.Utils;
 import org.yaml.snakeyaml.Yaml;
 
 import java.io.IOException;
@@ -24,7 +27,7 @@ public class YamlBeanDefinitionReader implements ConfigFileParser {
     public YamlBeanDefinitionReader(DefaultListableBeanFactory factory){
         this.factory = factory;
     }
-    List<BeanDefinitionHolder> beanDefinitionHolders = new ArrayList<>();
+    private List<BeanDefinitionHolder> beanDefinitionHolders = new ArrayList<>();
 
     @Override
     public ParserData parserFrom(Resource resource) {
@@ -33,7 +36,7 @@ public class YamlBeanDefinitionReader implements ConfigFileParser {
         return parseData;
     }
 
-    public void doParserFrom(BeansYamlObject parseData,Resource resource){
+    private void doParserFrom(BeansYamlObject parseData,Resource resource){
         try {
             Yaml yaml = new Yaml();
             Object ret = yaml.load(resource.getInputStream());
@@ -88,9 +91,30 @@ public class YamlBeanDefinitionReader implements ConfigFileParser {
         Map bean = (Map)map.get(BEAN);
         String beanName = (String)bean.get("id");
         String className = (String)bean.get("class");
-        BeanDefinitionHolder beanDefinitionHolder = new BeanDefinitionHolder(beanName,new BeanDefinition(beanName,className));
+        BeanDefinition bd = new BeanDefinition(beanName,className);
+        parseProperty(bd,bean);
+        BeanDefinitionHolder beanDefinitionHolder = new BeanDefinitionHolder(beanName,bd);
         return beanDefinitionHolder;
     }
+
+    /**
+     * 解析 bean key 下的属性
+     * @param bd spring中bean定义的数据结构,存储了整个bean的信息
+     * @param bean yaml读取的bean的数据结构,存储了bean下的属性信息
+     * */
+    public void parseProperty(BeanDefinition bd, Map bean){
+        Map property = (Map) bean.get("property");
+        if(property==null) return;
+        String name = (String) property.get("name");
+        String refName = (String) property.get("ref");
+        if(Utils.stringNotEmpty(name)){
+            RuntimeBeanReference ref = new RuntimeBeanReference(refName);
+            PropertyValue pv = new PropertyValue(name,ref);
+            bd.getPropertyValues().addPropertyValue(pv);
+        }
+    }
+
+
     public List<BeanDefinitionHolder> parseScanPackage(Map map){
 
         String pckage = (String)map.get(BASE_PACKAGE);
@@ -133,6 +157,7 @@ public class YamlBeanDefinitionReader implements ConfigFileParser {
             BeanDefinition beanDefination = new BeanDefinition(AutowiredAnnotationBeanPostProcessor.AUTOWIRED_ANNOTATION_PROCESSOR_BEAN_NAME,AutowiredAnnotationBeanPostProcessor.class.getName());
             BeanDefinitionHolder beanDefinitionHolder = new BeanDefinitionHolder(AutowiredAnnotationBeanPostProcessor.AUTOWIRED_ANNOTATION_PROCESSOR_BEAN_NAME,beanDefination);
             list.add(beanDefinitionHolder);
+
         }
         return list;
     }

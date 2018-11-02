@@ -8,5 +8,8 @@ public class Utils {
     public static void toDo(String conment){
         System.out.println("未完成的函数:"+ conment);
     }
-
+    public static boolean stringNotEmpty(String str){
+        if(str==null || "".equals(str)) return false;
+        return true;
+    }
 }
