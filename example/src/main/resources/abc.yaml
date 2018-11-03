@@ -6,14 +6,23 @@
     class: com.abc.example.pckage.TeacherService
     property:
         -
-            name: studentService
-            ref: studentService
+          name: studentService
+          ref: studentService
         -
-            name: name
-            value: '教务处全体老师'
+          name: name
+          value: '教务处全体老师'
         -
-            name: limitNum
-            value: '60'
+          name: limitNum
+          value: '60'
+        -
+          name: yesOrNo
+          value: 'true'
+        -
+          name: averageSalary
+          value: '19999.68996'
+        -
+          name: averageYear
+          vaslue: '17.6'
 - bean:
     id: userService
     class: com.abc.example.pckage.UserService

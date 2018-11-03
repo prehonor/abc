@@ -15,8 +15,7 @@ public class Orange extends Fruit{
     }
 
     public static void main(String[] args){
-        Orange orange = new Orange();
-        orange.fun1();
+
     }
 
 }

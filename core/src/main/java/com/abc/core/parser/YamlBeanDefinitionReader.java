@@ -10,6 +10,8 @@ import com.abc.core.parser.support.PropertyValue;
 import com.abc.core.parser.support.RuntimeBeanReference;
 import com.abc.core.parser.support.TypedStringValue;
 import com.abc.core.util.Utils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.yaml.snakeyaml.Yaml;
 
 import java.io.IOException;
@@ -18,7 +20,7 @@ import java.util.List;
 import java.util.Map;
 
 public class YamlBeanDefinitionReader implements ConfigFileParser {
-
+    private static final Log logger = LogFactory.getLog(YamlBeanDefinitionReader.class);
     private DefaultListableBeanFactory factory = null;
     private final String SCAN = "scan:componet-scan";
     private final String BASE_PACKAGE = "base-package";
@@ -89,12 +91,13 @@ public class YamlBeanDefinitionReader implements ConfigFileParser {
     }
 
     public BeanDefinitionHolder parseBean(Map map){
+        BeanDefinitionHolder beanDefinitionHolder;
         Map bean = (Map)map.get(BEAN);
         String beanName = (String)bean.get("id");
         String className = (String)bean.get("class");
         BeanDefinition bd = new BeanDefinition(beanName,className);
         parseProperty(bd,bean);
-        BeanDefinitionHolder beanDefinitionHolder = new BeanDefinitionHolder(beanName,bd);
+        beanDefinitionHolder = new BeanDefinitionHolder(beanName,bd);
         return beanDefinitionHolder;
     }
 
@@ -125,14 +128,19 @@ public class YamlBeanDefinitionReader implements ConfigFileParser {
         String refName = (String) propertyMap.get("ref");
         String value = (String) propertyMap.get("value");
         if(Utils.stringNotEmpty(name)){
-            RuntimeBeanReference ref = new RuntimeBeanReference(refName);
-            PropertyValue pv = new PropertyValue(name,ref);
-            bd.getPropertyValues().addPropertyValue(pv);
-        }
-        if(Utils.stringNotEmpty(value)){
-            TypedStringValue typeString = new TypedStringValue(value);
-            PropertyValue pv = new PropertyValue(name,typeString);
-            bd.getPropertyValues().addPropertyValue(pv);
+            if(Utils.stringNotEmpty(refName)){
+                RuntimeBeanReference ref = new RuntimeBeanReference(refName);
+                PropertyValue pv = new PropertyValue(name,ref);
+                bd.getPropertyValues().addPropertyValue(pv);
+            }else if(Utils.stringNotEmpty(value)){
+                TypedStringValue typeString = new TypedStringValue(value);
+                PropertyValue pv = new PropertyValue(name,typeString);
+                bd.getPropertyValues().addPropertyValue(pv);
+            }else {
+                if (logger.isDebugEnabled()) {
+                    logger.debug("property :  " + name + "下的ref和value都不存在");
+                }
+            }
         }
     }
 
