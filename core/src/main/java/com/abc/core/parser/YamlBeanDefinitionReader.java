@@ -8,6 +8,7 @@ import com.abc.core.io.ClassPathResource;
 import com.abc.core.io.Resource;
 import com.abc.core.parser.support.PropertyValue;
 import com.abc.core.parser.support.RuntimeBeanReference;
+import com.abc.core.parser.support.TypedStringValue;
 import com.abc.core.util.Utils;
 import org.yaml.snakeyaml.Yaml;
 
@@ -98,18 +99,39 @@ public class YamlBeanDefinitionReader implements ConfigFileParser {
     }
 
     /**
-     * 解析 bean key 下的属性
+     * 解析 bean 下的属性
      * @param bd spring中bean定义的数据结构,存储了整个bean的信息
      * @param bean yaml读取的bean的数据结构,存储了bean下的属性信息
      * */
     public void parseProperty(BeanDefinition bd, Map bean){
-        Map property = (Map) bean.get("property");
+
+        Object property = bean.get("property");
         if(property==null) return;
-        String name = (String) property.get("name");
-        String refName = (String) property.get("ref");
+        if(property instanceof Map){
+            Map propertyMap = (Map)property;
+            parsePropertyMap(bd,propertyMap);
+        }
+        else if(property instanceof List){
+            List properties = (List)property;
+            for(Object subproperty : properties) {
+                Map propertyMap = (Map)subproperty;
+                parsePropertyMap(bd,propertyMap);
+            }
+        }
+    }
+
+    public void parsePropertyMap(BeanDefinition bd, Map propertyMap){
+        String name = (String) propertyMap.get("name");
+        String refName = (String) propertyMap.get("ref");
+        String value = (String) propertyMap.get("value");
         if(Utils.stringNotEmpty(name)){
             RuntimeBeanReference ref = new RuntimeBeanReference(refName);
             PropertyValue pv = new PropertyValue(name,ref);
+            bd.getPropertyValues().addPropertyValue(pv);
+        }
+        if(Utils.stringNotEmpty(value)){
+            TypedStringValue typeString = new TypedStringValue(value);
+            PropertyValue pv = new PropertyValue(name,typeString);
             bd.getPropertyValues().addPropertyValue(pv);
         }
     }

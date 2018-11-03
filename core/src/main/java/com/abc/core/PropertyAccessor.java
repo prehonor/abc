@@ -1,7 +1,12 @@
 package com.abc.core;
 
 import com.abc.core.parser.support.PropertyValue;
+import com.abc.core.parser.support.RuntimeBeanReference;
+import com.abc.core.parser.support.TypedStringValue;
+import com.abc.core.propertyeditors.CustomerPropertyEditor;
+import com.abc.core.propertyeditors.CustomerPropertyEditorFactory;
 import com.abc.core.util.ReflectUtil;
+import sun.awt.SunHints;
 
 import java.beans.BeanInfo;
 import java.beans.IntrospectionException;
@@ -10,8 +15,9 @@ import java.beans.PropertyDescriptor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
+
 
 /**
  * 属性访问器
@@ -24,6 +30,12 @@ public class PropertyAccessor {
     PropertyAccessor(Object instance){
         this.wrapedObject = instance;
         this.propertyDescriptorCache = new LinkedHashMap<>();
+    }
+
+    public void setProperties(List<PropertyValue> properties){
+        for(PropertyValue propertyValue : properties){
+            setProperty(propertyValue.getName(),propertyValue.getConvertedValue());
+        }
     }
 
     /**
@@ -57,7 +69,8 @@ public class PropertyAccessor {
         //这里只考虑必须有set方法的属性
         //获取对象实例中的所有方法,找到属性对应的set方法
         PropertyDescriptor propertyDescriptor = getPropertyDescriptor(propertyName);
-        if(propertyDescriptor!=null && propertyDescriptor.getWriteMethod()!=null)
+        if(propertyDescriptor!=null
+                && propertyDescriptor.getWriteMethod()!=null)
             return true;
         return false;
     }
@@ -92,5 +105,26 @@ public class PropertyAccessor {
             propertyDescriptor = propertyDescriptorCache.get(propertyName);
         }
         return propertyDescriptor;
+    }
+
+    public Object converForPropertyIfNecessary(PropertyValue pv) {
+
+        String propertyName = pv.getName();
+        Object value = pv.getValue();
+        if(value instanceof RuntimeBeanReference) return value;
+        PropertyDescriptor propertyDescriptor = getPropertyDescriptor(propertyName);
+        Class type = propertyDescriptor.getWriteMethod().getParameterTypes()[0];//set方法 约定只有一个参数
+        //根据type获取对应的类型转化器
+        if(TypedStringValue.class.isAssignableFrom(value.getClass()) ){
+            TypedStringValue innervalue = (TypedStringValue) value;
+            if(String.class.isAssignableFrom(type)){
+                value = innervalue.getValue();
+            }else{
+                CustomerPropertyEditor propertyEditor = CustomerPropertyEditorFactory.getInstance().getCustomerPropertyEditor(type);
+                value = propertyEditor.converToType(innervalue.getValue());
+            }
+            pv.converted();
+        }
+        return value;
     }
 }

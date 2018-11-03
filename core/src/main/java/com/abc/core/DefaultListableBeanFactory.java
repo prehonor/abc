@@ -124,12 +124,21 @@ public class DefaultListableBeanFactory implements ListableBeanFactory, Autowire
             return;
         }
         BeanDefinitionValueResolver valueResolver = new BeanDefinitionValueResolver(this, beanName, mbd);
+        List<PropertyValue> propertyValues = new ArrayList<>();
+        PropertyAccessor propertyAccessor = new PropertyAccessor(instance);
         for(PropertyValue pv : pvs.getPropertyValueList()){
-            Object value = valueResolver.resolveValueIfNecessary(pv,pv.getValue());
-            PropertyAccessor propertyAccessor = new PropertyAccessor(instance);
-            propertyAccessor.setProperty(pv.getName(),value);
+            Object value = valueResolver.resolveValueIfNecessary(pv,pv.getValue());//可能返回bean
+            Object convertedValue = propertyAccessor.converForPropertyIfNecessary(pv);//可能需要将string value转化成int等
+            if(pv.isConverted())
+                pv.setConvertedValue(convertedValue);
+            else
+                pv.setConvertedValue(value);
+
+            propertyValues.add(pv);
         }
+        propertyAccessor.setProperties(propertyValues);
     }
+
 
     void applyBeanPostProcessors(String beanName,Object instance){
        for(BeanPostProcessor beanPostProcessor:getBeanPostProcessors()){

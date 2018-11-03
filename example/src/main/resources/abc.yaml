@@ -5,8 +5,15 @@
     id: teacherService
     class: com.abc.example.pckage.TeacherService
     property:
-        name: studentService
-        ref: studentService
+        -
+            name: studentService
+            ref: studentService
+        -
+            name: name
+            value: '教务处全体老师'
+        -
+            name: limitNum
+            value: '60'
 - bean:
     id: userService
     class: com.abc.example.pckage.UserService
