@@ -1,12 +1,9 @@
 package com.abc.core.parser;
 
-import com.abc.core.AutowiredAnnotationBeanPostProcessor;
-import com.abc.core.BeanDefinition;
-import com.abc.core.ComponetBeanDifinitionScanner;
-import com.abc.core.DefaultListableBeanFactory;
+import com.abc.core.*;
 import com.abc.core.io.ClassPathResource;
 import com.abc.core.io.Resource;
-import com.abc.core.util.Utils;
+import com.abc.core.util.SystemUtils;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -20,9 +17,11 @@ import java.util.Properties;
 public class PropertiesBeanDefinationReader implements ConfigFileParser {
 
     private DefaultListableBeanFactory factory = null;
+    private String[] pathes;
 
-    public PropertiesBeanDefinationReader(DefaultListableBeanFactory factory){
+    public PropertiesBeanDefinationReader(DefaultListableBeanFactory factory,String[] pathes){
         this.factory = factory;
+        this.pathes = pathes;
     }
 
     public static final String REF_FILE = "file";
@@ -32,7 +31,7 @@ public class PropertiesBeanDefinationReader implements ConfigFileParser {
 
 
     public void doLoadBeanDefination(Resource resource,BeansProperties beansProperties){
-        Utils.toDo("解析properties文件定义的bean");
+        SystemUtils.toDo("解析properties文件定义的bean");
         Properties properties = new Properties();
         try {
             properties.load(resource.getInputStream());
@@ -49,7 +48,7 @@ public class PropertiesBeanDefinationReader implements ConfigFileParser {
     }
 
     public void processBeanDefination(String key,String value){
-        BeanDefinition beanDefination = new BeanDefinition(key,value);
+        GenericBeanDefinition beanDefination = new GenericBeanDefinition(key,value);
         getRegistry().registryBeanDefinition(key,beanDefination);
 
     }
@@ -60,9 +59,9 @@ public class PropertiesBeanDefinationReader implements ConfigFileParser {
     }
 
     public List<BeanDefinitionHolder> scanCandidateComponents(String key,String value){
-        ComponetBeanDifinitionScanner componetBeanDifinitionScanner = new ComponetBeanDifinitionScanner();
+        ComponentBeanDefinitionScanner componentBeanDefinitionScanner = new ComponentBeanDefinitionScanner();
         try {
-            return componetBeanDifinitionScanner.registryComponentBeanDefinition(value);
+            return componentBeanDefinitionScanner.registryComponentBeanDefinition(value);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -74,22 +73,18 @@ public class PropertiesBeanDefinationReader implements ConfigFileParser {
      * */
     public List<BeanDefinitionHolder> getInnerComponents(){
         List<BeanDefinitionHolder> list = new ArrayList<>();
-        if(!factory.containsBeanDefinition(AutowiredAnnotationBeanPostProcessor.AUTOWIRED_ANNOTATION_PROCESSOR_BEAN_NAME)){
-            BeanDefinition beanDefination = new BeanDefinition(AutowiredAnnotationBeanPostProcessor.AUTOWIRED_ANNOTATION_PROCESSOR_BEAN_NAME,AutowiredAnnotationBeanPostProcessor.class.getName());
-            BeanDefinitionHolder beanDefinitionHolder = new BeanDefinitionHolder(AutowiredAnnotationBeanPostProcessor.AUTOWIRED_ANNOTATION_PROCESSOR_BEAN_NAME,beanDefination);
-            list.add(beanDefinitionHolder);
-        }
+        list.addAll(AnnotationConfigUtils.registryAnnotatedBeanPostProcessors(factory));
         return list;
     }
 
-    @Override
+//    @Override
     public ParserData parserFrom(Resource resource) {
         BeansProperties beansProperties = new BeansProperties();
         doLoadBeanDefination(resource,beansProperties);
         return beansProperties;
     }
 
-    @Override
+//    @Override
     public List<BeanDefinitionHolder> convertToBeanDefinition(ParserData data) {
         List<BeanDefinitionHolder> list = new ArrayList<>();
         BeansProperties beansProperties = (BeansProperties) data;
@@ -110,6 +105,16 @@ public class PropertiesBeanDefinationReader implements ConfigFileParser {
         }
         return list;
     }
+
+    @Override
+    public void registryBeanDefinition() {
+        for(String path: pathes){
+            Resource resource = new ClassPathResource(path);
+            ParserData data = parserFrom(resource);
+            registryBeanDefinition(convertToBeanDefinition(data),factory);
+        }
+    }
+
     @Override
     public void registryBeanDefinition(List<BeanDefinitionHolder> beanholders, BeanDefinitionRegistry registry) {
 

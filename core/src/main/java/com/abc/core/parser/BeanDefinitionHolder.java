@@ -1,6 +1,7 @@
 package com.abc.core.parser;
 
 import com.abc.core.BeanDefinition;
+import com.abc.core.GenericBeanDefinition;
 
 public class BeanDefinitionHolder {
     public BeanDefinition beanDefinition;

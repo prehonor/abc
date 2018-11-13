@@ -13,16 +13,13 @@ public class ClassPathYamlAppContext extends ApplicationContext{
 
     public ClassPathYamlAppContext(String... paths){
         factory = createBeanFactory();
-        reader = createConfigFileParser();
         this.paths = paths;
+        reader = createConfigFileParser();
         onRefresh();
     }
 
     public void loadBeanDefination(){
-        for(String path : paths){
-            ParserData data = reader.parserFrom(createResource(path));
-            reader.registryBeanDefinition(reader.convertToBeanDefinition(data),factory);;
-        }
+        reader.registryBeanDefinition();
     }
 
     public DefaultListableBeanFactory createBeanFactory(){
@@ -47,12 +44,8 @@ public class ClassPathYamlAppContext extends ApplicationContext{
         PostProcessorRegistrationDelegate.registerBeanPostProcessors(beanFactory, this);
     }
 
-    public Resource createResource(String path){
-        Resource resource = new ClassPathResource(path);
-        return resource;
-    }
 
     public ConfigFileParser createConfigFileParser(){
-        return new YamlBeanDefinitionReader(factory);
+        return new YamlBeanDefinitionReader(factory,paths);
     }
 }

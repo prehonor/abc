@@ -3,10 +3,22 @@ package com.abc.core.propertyeditors;
 import java.util.HashMap;
 import java.util.Map;
 
-public class CustomerPropertyEditorFactory {
-    private static CustomerPropertyEditorFactory instance = null;
+public class DefaultCustomerPropertyEditorFactory implements ICustomerPropertyEditorFactory{
+    private static DefaultCustomerPropertyEditorFactory instance = null;
     private static Map<Class,CustomerPropertyEditor> products = new HashMap<>();
-    static{
+
+    private DefaultCustomerPropertyEditorFactory(){
+        createCustomerPropertyEditors();
+    }
+
+    public static DefaultCustomerPropertyEditorFactory getInstance(){
+        if(instance==null)
+            instance = new DefaultCustomerPropertyEditorFactory();
+        return instance;
+    }
+
+    @Override
+    public void createCustomerPropertyEditors() {
         products.put(int.class,new NumberPropertyEditor(int.class));
         products.put(Integer.class,new NumberPropertyEditor(Integer.class));
         products.put(float.class,new NumberPropertyEditor(float.class));
@@ -17,16 +29,7 @@ public class CustomerPropertyEditorFactory {
         products.put(Boolean.class,new BooleanPropertyEditor(Boolean.class));
     }
 
-    private CustomerPropertyEditorFactory(){
-
-    }
-
-    public static CustomerPropertyEditorFactory getInstance(){
-        if(instance==null)
-            instance = new CustomerPropertyEditorFactory();
-        return instance;
-    }
-
+    @Override
     public CustomerPropertyEditor getCustomerPropertyEditor(Class type){
         return products.get(type);
     }

@@ -14,6 +14,11 @@ public class AnnotationAttributes extends LinkedHashMap<String, Object> {
         this.annotationType  = getAnnotationType(annotationType,classLoader);
 
     }
+
+    public AnnotationAttributes(Class annotationType){
+        this.annotationType = annotationType;
+    }
+
     public Class<? extends Annotation> annotationType() {
         return this.annotationType;
     }

@@ -12,9 +12,12 @@ import java.lang.annotation.Annotation;
 import java.net.URL;
 import java.util.*;
 
-public class ComponetBeanDifinitionScanner {
+/**
+ * 扫描包下class文件,生成指定的 {@link BeanDefinitionHolder}
+ * */
+public class ComponentBeanDefinitionScanner {
     private final List<Class<? extends Annotation>> includeFilters = new ArrayList<>();
-    public ComponetBeanDifinitionScanner(){
+    public ComponentBeanDefinitionScanner(){
         includeFilters.add(Component.class);
     }
 
@@ -30,7 +33,7 @@ public class ComponetBeanDifinitionScanner {
                 SimpleMetadataReader metadataReader = new SimpleMetadataReader(resource,ClassLoader.getSystemClassLoader());
                 if(isCondition(resource,metadataReader)){
                     String className = metadataReader.classMetadata.getSpecifiedBeanName();
-                    beanDefinitionHolders.add(new BeanDefinitionHolder(className,new BeanDefinition(className,metadataReader.classMetadata.getClassName())));
+                    beanDefinitionHolders.add(new BeanDefinitionHolder(className,new GenericBeanDefinition(className,metadataReader.classMetadata.getClassName())));
                 }
             }
         }

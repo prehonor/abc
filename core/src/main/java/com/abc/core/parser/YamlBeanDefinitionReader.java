@@ -1,15 +1,12 @@
 package com.abc.core.parser;
 
-import com.abc.core.AutowiredAnnotationBeanPostProcessor;
-import com.abc.core.BeanDefinition;
-import com.abc.core.ComponetBeanDifinitionScanner;
-import com.abc.core.DefaultListableBeanFactory;
+import com.abc.core.*;
 import com.abc.core.io.ClassPathResource;
 import com.abc.core.io.Resource;
 import com.abc.core.parser.support.PropertyValue;
 import com.abc.core.parser.support.RuntimeBeanReference;
 import com.abc.core.parser.support.TypedStringValue;
-import com.abc.core.util.Utils;
+import com.abc.core.util.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.yaml.snakeyaml.Yaml;
@@ -18,6 +15,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class YamlBeanDefinitionReader implements ConfigFileParser {
     private static final Log logger = LogFactory.getLog(YamlBeanDefinitionReader.class);
@@ -26,13 +24,15 @@ public class YamlBeanDefinitionReader implements ConfigFileParser {
     private final String BASE_PACKAGE = "base-package";
     private final String IMPORT = "import";
     private final String BEAN = "bean";
+    private String[] pathes;
 
-    public YamlBeanDefinitionReader(DefaultListableBeanFactory factory){
+    public YamlBeanDefinitionReader(DefaultListableBeanFactory factory,String[] pathes){
         this.factory = factory;
+        this.pathes = pathes;
     }
     private List<BeanDefinitionHolder> beanDefinitionHolders = new ArrayList<>();
 
-    @Override
+//    @Override
     public ParserData parserFrom(Resource resource) {
         BeansYamlObject parseData = new BeansYamlObject();
         doParserFrom(parseData,resource);
@@ -74,7 +74,7 @@ public class YamlBeanDefinitionReader implements ConfigFileParser {
 
     }
 
-    @Override
+//    @Override
     public List<BeanDefinitionHolder> convertToBeanDefinition(ParserData data) {
         BeansYamlObject yamlObject = (BeansYamlObject)data;
         for(Object o : yamlObject.getList()){
@@ -95,7 +95,7 @@ public class YamlBeanDefinitionReader implements ConfigFileParser {
         Map bean = (Map)map.get(BEAN);
         String beanName = (String)bean.get("id");
         String className = (String)bean.get("class");
-        BeanDefinition bd = new BeanDefinition(beanName,className);
+        GenericBeanDefinition bd = new GenericBeanDefinition(beanName,className);
         parseProperty(bd,bean);
         beanDefinitionHolder = new BeanDefinitionHolder(beanName,bd);
         return beanDefinitionHolder;
@@ -106,7 +106,7 @@ public class YamlBeanDefinitionReader implements ConfigFileParser {
      * @param bd spring中bean定义的数据结构,存储了整个bean的信息
      * @param bean yaml读取的bean的数据结构,存储了bean下的属性信息
      * */
-    public void parseProperty(BeanDefinition bd, Map bean){
+    public void parseProperty(GenericBeanDefinition bd, Map bean){
 
         Object property = bean.get("property");
         if(property==null) return;
@@ -123,16 +123,16 @@ public class YamlBeanDefinitionReader implements ConfigFileParser {
         }
     }
 
-    public void parsePropertyMap(BeanDefinition bd, Map propertyMap){
+    public void parsePropertyMap(GenericBeanDefinition bd, Map propertyMap){
         String name = (String) propertyMap.get("name");
         String refName = (String) propertyMap.get("ref");
         String value = (String) propertyMap.get("value");
-        if(Utils.stringNotEmpty(name)){
-            if(Utils.stringNotEmpty(refName)){
+        if(StringUtils.stringNotEmpty(name)){
+            if(StringUtils.stringNotEmpty(refName)){
                 RuntimeBeanReference ref = new RuntimeBeanReference(refName);
                 PropertyValue pv = new PropertyValue(name,ref);
                 bd.getPropertyValues().addPropertyValue(pv);
-            }else if(Utils.stringNotEmpty(value)){
+            }else if(StringUtils.stringNotEmpty(value)){
                 TypedStringValue typeString = new TypedStringValue(value);
                 PropertyValue pv = new PropertyValue(name,typeString);
                 bd.getPropertyValues().addPropertyValue(pv);
@@ -168,9 +168,9 @@ public class YamlBeanDefinitionReader implements ConfigFileParser {
     }
 
     public List<BeanDefinitionHolder> scanCandidateComponents(String value){
-        ComponetBeanDifinitionScanner componetBeanDifinitionScanner = new ComponetBeanDifinitionScanner();
+        ComponentBeanDefinitionScanner componentBeanDefinitionScanner = new ComponentBeanDefinitionScanner();
         try {
-            return componetBeanDifinitionScanner.registryComponentBeanDefinition(value);
+            return componentBeanDefinitionScanner.registryComponentBeanDefinition(value);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -183,13 +183,17 @@ public class YamlBeanDefinitionReader implements ConfigFileParser {
      * */
     public List<BeanDefinitionHolder> getInnerComponents(){
         List<BeanDefinitionHolder> list = new ArrayList<>();
-        if(!factory.containsBeanDefinition(AutowiredAnnotationBeanPostProcessor.AUTOWIRED_ANNOTATION_PROCESSOR_BEAN_NAME)){
-            BeanDefinition beanDefination = new BeanDefinition(AutowiredAnnotationBeanPostProcessor.AUTOWIRED_ANNOTATION_PROCESSOR_BEAN_NAME,AutowiredAnnotationBeanPostProcessor.class.getName());
-            BeanDefinitionHolder beanDefinitionHolder = new BeanDefinitionHolder(AutowiredAnnotationBeanPostProcessor.AUTOWIRED_ANNOTATION_PROCESSOR_BEAN_NAME,beanDefination);
-            list.add(beanDefinitionHolder);
-
-        }
+        Set<BeanDefinitionHolder> beanDefinitionHolders = AnnotationConfigUtils.registryAnnotatedBeanPostProcessors(factory);
+        list.addAll(beanDefinitionHolders);
         return list;
     }
 
+    @Override
+    public void registryBeanDefinition() {
+        for(String path: pathes){
+            Resource resource = new ClassPathResource(path);
+            ParserData data = parserFrom(resource);
+            registryBeanDefinition(convertToBeanDefinition(data),factory);
+        }
+    }
 }

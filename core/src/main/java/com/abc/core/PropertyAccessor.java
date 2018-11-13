@@ -4,9 +4,8 @@ import com.abc.core.parser.support.PropertyValue;
 import com.abc.core.parser.support.RuntimeBeanReference;
 import com.abc.core.parser.support.TypedStringValue;
 import com.abc.core.propertyeditors.CustomerPropertyEditor;
-import com.abc.core.propertyeditors.CustomerPropertyEditorFactory;
+import com.abc.core.propertyeditors.DefaultCustomerPropertyEditorFactory;
 import com.abc.core.util.ReflectUtil;
-import sun.awt.SunHints;
 
 import java.beans.BeanInfo;
 import java.beans.IntrospectionException;
@@ -120,7 +119,7 @@ public class PropertyAccessor {
             if(String.class.isAssignableFrom(type)){
                 value = innervalue.getValue();
             }else{
-                CustomerPropertyEditor propertyEditor = CustomerPropertyEditorFactory.getInstance().getCustomerPropertyEditor(type);
+                CustomerPropertyEditor propertyEditor = DefaultCustomerPropertyEditorFactory.getInstance().getCustomerPropertyEditor(type);
                 value = propertyEditor.converToType(innervalue.getValue());
             }
             pv.converted();

@@ -13,17 +13,15 @@ public class ClassPathPropertiesAppContext extends ApplicationContext{
     private DefaultListableBeanFactory factory = null;
 
     public ClassPathPropertiesAppContext(String... paths){
+        this.paths = paths;
+        assert paths!=null && paths.length>0 : "资源路径不能为空!";
         factory = createBeanFactory();
         reader = createConfigFileParser();
-        this.paths = paths;
         onRefresh();
     }
 
     public void loadBeanDefination(){
-        for(String path : paths){
-            ParserData data = reader.parserFrom(createResource(path));
-            reader.registryBeanDefinition(reader.convertToBeanDefinition(data),factory);;
-        }
+        reader.registryBeanDefinition();
     }
 
     public DefaultListableBeanFactory createBeanFactory(){
@@ -48,12 +46,7 @@ public class ClassPathPropertiesAppContext extends ApplicationContext{
         PostProcessorRegistrationDelegate.registerBeanPostProcessors(beanFactory, this);
     }
 
-    public Resource createResource(String path){
-        Resource resource = new ClassPathResource(path);
-        return resource;
-    }
-
     public ConfigFileParser createConfigFileParser(){
-        return new PropertiesBeanDefinationReader(factory);
+        return new PropertiesBeanDefinationReader(factory,paths);
     }
 }

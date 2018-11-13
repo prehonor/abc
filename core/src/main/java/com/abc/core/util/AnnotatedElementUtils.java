@@ -20,6 +20,15 @@ public class AnnotatedElementUtils {
 
         return attributes;
     }
+
+    public static AnnotationAttributes getMergedAnnotationAttributes(
+            AnnotatedElement element, String annotationType) {
+
+        AnnotationAttributes attributes = searchWithGetSemantics(element, null, annotationType,new MergedAnnotationAttributesProcessor());
+
+        return attributes;
+    }
+
     private static <T> T searchWithGetSemantics(AnnotatedElement element,
                                                 Class<? extends Annotation> annotationType, String annotationName,Processor<T> mergedAnnotationAttributesProcessor) {
 
@@ -31,6 +40,27 @@ public class AnnotatedElementUtils {
             }
         }
         return result;
+    }
+
+    public static Set<String> getMetaAnnotationTypes(Object introspectedClass, String annotationName) {
+        final Set<String> types = new LinkedHashSet<>();
+        searchWithGetSemantics((AnnotatedElement) introspectedClass, null, annotationName, new Processor<Object>() {
+            @Override
+            public Object process(AnnotatedElement annotatedElement, Annotation annotation) {
+                types.add(annotation.annotationType().getName());
+                return types;
+            }
+        });
+        return types;
+    }
+
+    public static boolean isAnnotated(Object introspectedClass, String annotationName) {
+        return Boolean.TRUE.equals(searchWithGetSemantics((AnnotatedElement) introspectedClass, null, annotationName, new Processor<Boolean>() {
+            @Override
+            public Boolean process(AnnotatedElement annotatedElement, Annotation annotation) {
+                return true;
+            }
+        }));
     }
 
 
@@ -46,7 +76,7 @@ public class AnnotatedElementUtils {
         @Override
         public AnnotationAttributes process(AnnotatedElement annotatedElement, Annotation annotation) {
             Class<? extends Annotation> annotationType = annotation.annotationType();
-            AnnotationAttributes attributes = new AnnotationAttributes(annotationType.getName(),ClassLoader.getSystemClassLoader());
+            AnnotationAttributes attributes = new AnnotationAttributes(annotationType);
             for (Method method : getAttributeMethods(annotationType)) {
 
                 try {

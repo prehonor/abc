@@ -21,9 +21,6 @@ public class AutowiredAnnotationBeanPostProcessor implements BeanPostProcessor,B
     private AutowireCapableBeanFactory beanFactory;
 
 
-    public static final String AUTOWIRED_ANNOTATION_PROCESSOR_BEAN_NAME =
-            "org.springframework.context.annotation.internalAutowiredAnnotationProcessor";
-
 
     public AutowiredAnnotationBeanPostProcessor() {
         this.autowiredAnnotationTypes.add(Autowired.class);
@@ -58,7 +55,7 @@ public class AutowiredAnnotationBeanPostProcessor implements BeanPostProcessor,B
             Field field = (Field) this.member;
             Object value;
             Class fieldType = field.getType();
-            value = beanFactory.resloveDependency(bean,fieldType,ReflectUtil.getFieldTypeBeanName(field));
+            value = beanFactory.resolveDependency(bean,fieldType,ReflectUtil.getFieldTypeBeanName(field));
             if (value != null) {
                 ReflectUtil.makeAccessible(field);
                 try {

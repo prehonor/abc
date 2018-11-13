@@ -2,7 +2,6 @@ package com.abc.core.parser;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Properties;
 
 public class BeansYamlObject implements ParserData {
     private List<Object> listObjects = new ArrayList<>();

@@ -4,7 +4,10 @@ import com.abc.core.parser.BeanDefinitionRegistry;
 import com.abc.core.parser.support.PropertyValue;
 import com.abc.core.parser.support.PropertyValues;
 import com.abc.core.util.ReflectUtil;
+import com.abc.core.util.StringUtils;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -20,9 +23,9 @@ public class DefaultListableBeanFactory implements ListableBeanFactory, Autowire
 
 
     @Override
-    public void registryBeanDefinition(String key,BeanDefinition beanDefinition){
+    public void registryBeanDefinition(String key, BeanDefinition beanDefinition){
         if(beanDefinitionMap.get(key)==null){
-            beanDefinitionMap.put(key,beanDefinition);
+            beanDefinitionMap.put(key, beanDefinition);
 
             beanDefinitionNames.add(key);
         }
@@ -60,11 +63,11 @@ public class DefaultListableBeanFactory implements ListableBeanFactory, Autowire
             boolean newSingleton = false;
             if(singletonObject==null && isCreating){
                 BeanDefinition beanDefinition = beanDefinitionMap.get(beanName);
-                singletonObject = create(beanName,beanDefinition);
+                singletonObject = create(beanName, beanDefinition);
                 applyBeanPostProcessors(beanName,singletonObject);  //
                 newSingleton = true;
-                populateBean(beanName,beanDefinition,singletonObject);//装配bean
-                initializeBean(singletonObject,beanName,beanDefinition);//初始化bean
+                populateBean(beanName, beanDefinition,singletonObject);//装配bean
+                initializeBean(singletonObject,beanName, beanDefinition);//初始化bean
                 if (newSingleton) {
                     addSingleton(beanName, singletonObject);
                 }
@@ -82,8 +85,8 @@ public class DefaultListableBeanFactory implements ListableBeanFactory, Autowire
 
 
 
-    public Object create(String name,BeanDefinition beanDefinition){
-        return doCreate(name,beanDefinition);
+    public Object create(String name, BeanDefinition beanDefinition){
+        return doCreate(name, beanDefinition);
     }
 
     public void addSingleton(String beanName,Object beanInstance){
@@ -94,9 +97,35 @@ public class DefaultListableBeanFactory implements ListableBeanFactory, Autowire
      * 实际的创建bean实例的方法
      * */
     public Object doCreate(String name , BeanDefinition beanDefinition){
+        if (beanDefinition.getFactoryMethodName() != null) {
+            return instantiateUsingFactoryMethod(beanDefinition);
+        }
+        return instantialBean(beanDefinition);
+    }
+
+    private Object instantiateUsingFactoryMethod(BeanDefinition beanDefinition) {
+        Object instance = null;
+        String factoryBeanName = beanDefinition.getFactoryBeanName();
+        Object factoryBean = getBean(factoryBeanName);
+        if(beanDefinition instanceof AnnotatedBeanDefinition){
+            AnnotatedBeanDefinition annotatedBeanDefinition  =(AnnotatedBeanDefinition)beanDefinition;
+            Method factoryMethod = annotatedBeanDefinition.getFactoryMethodMetadata().getFactoryMethod();
+            try {
+                ReflectUtil.makeAccessible(factoryMethod);
+                instance = factoryMethod.invoke(factoryBean);
+            } catch (IllegalAccessException e) {
+                e.printStackTrace();
+            } catch (InvocationTargetException e) {
+                e.printStackTrace();
+            }
+        }
+        return instance;
+    }
+
+    public Object instantialBean(BeanDefinition beanDefinition){
         Object singletonObject = null;
 
-        if(beanDefinition!=null){
+        if(beanDefinition !=null){
             String className = beanDefinition.getClassName();
             singletonObject = ReflectUtil.getInstance(className);
         }
@@ -106,7 +135,7 @@ public class DefaultListableBeanFactory implements ListableBeanFactory, Autowire
     /**
      * 装配bean属性
      * */
-    protected void populateBean(String beanName,BeanDefinition mbd, Object instance){
+    protected void populateBean(String beanName, BeanDefinition mbd, Object instance){
         PropertyValues pvs = (mbd.hasPropertyValues() ? mbd.getPropertyValues() : null);
         for (BeanPostProcessor bp : getBeanPostProcessors()) {
             bp.postProcessPropertyValues(instance,beanName);//处理bean实例中的属性值
@@ -119,7 +148,7 @@ public class DefaultListableBeanFactory implements ListableBeanFactory, Autowire
     /**
      * 设置bean实例中的属性值
      * */
-    protected void applyPropertyValues(String beanName, BeanDefinition mbd,Object instance, PropertyValues pvs){
+    protected void applyPropertyValues(String beanName, BeanDefinition mbd, Object instance, PropertyValues pvs){
         if (pvs.isEmpty()) {
             return;
         }
@@ -162,8 +191,8 @@ public class DefaultListableBeanFactory implements ListableBeanFactory, Autowire
             Object instance = getSingleton(beanName,false);//从缓存中瞥一眼
             if(instance==null){
                 BeanDefinition beanDefinition = getBeanDefinition(beanName);
-                assert(beanDefinition!=null);
-                if(ReflectUtil.isTypeClass(clazz.getName(),beanDefinition.getClassName(),ClassLoader.getSystemClassLoader())){
+                assert(beanDefinition !=null);
+                if(ReflectUtil.isTypeClass(clazz.getName(), beanDefinition.getClassName(),ClassLoader.getSystemClassLoader())){
                     list.add(beanName);
                 }
             }
@@ -177,15 +206,22 @@ public class DefaultListableBeanFactory implements ListableBeanFactory, Autowire
         this.beanPostProcessors.add(beanPostProcessor);
     }
 
+    @Override
     public BeanDefinition getBeanDefinition(String beanName){
         return this.beanDefinitionMap.get(beanName);
     }
 
+    @Override
     public boolean containsBeanDefinition(String beanName) {
         return this.beanDefinitionMap.containsKey(beanName);
     }
 
-    public void initializeBean(Object bean,String beanName,BeanDefinition beanDefinition){
+    @Override
+    public String[] getBeanDefinitionNames() {
+        return StringUtils.toStringArray(this.beanDefinitionNames);
+    }
+
+    public void initializeBean(Object bean, String beanName, BeanDefinition beanDefinition){
         invokeAwareMethods(beanName, bean);
     }
     private void invokeAwareMethods(final String beanName, final Object bean) {
@@ -197,7 +233,7 @@ public class DefaultListableBeanFactory implements ListableBeanFactory, Autowire
     }
 
     @Override
-    public Object resloveDependency(Object bean,Class fieldType,String fieldName){
+    public Object resolveDependency(Object bean,Class fieldType,String fieldName){
         return getBean(fieldName);
     }
 }
